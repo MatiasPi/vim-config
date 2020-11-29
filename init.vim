@@ -1,5 +1,11 @@
 " " some of this only runs on Neovim 0.5 so make sure you have that
 
+" " cool ideas to try:
+
+" alt+w/b to move between words in variables, like you have 'unicodeLetter' and pressing alt+w would take you to the L instead of to the next word. use that plugin u used for that
+
+
+
 " " todos:
 
 " - look into autocompletion:
@@ -10,6 +16,16 @@
 " - https://www.youtube.com/watch?v=Iid1Ms14Om4
 " - https://www.youtube.com/watch?v=ICU9OEsNiRA
 "
+" plugins to try out:
+
+" terminal on the floating popup
+" https://github.com/voldikss/vim-floaterm
+
+" delete instead of cut
+" https://github.com/svermeulen/vim-cutlass
+
+" vim-clap.. Leaderf replacement
+" https://github.com/liuchengxu/vim-clap
 
 call plug#begin('~/.local/share/nvim/plugged')
 " color schemes
@@ -28,8 +44,17 @@ Plug 'stefandtw/quickfix-reflector.vim'
 Plug '~/dev/odin.vim'
 Plug 'nvim-treesitter/nvim-treesitter'
 Plug 'nvim-treesitter/playground'
+Plug 'junegunn/vim-peekaboo'
+Plug 'justinmk/vim-dirvish'
+Plug 'liuchengxu/vim-clap', { 'do': ':Clap install-binary' }
 
 call plug#end()
+
+" " gui config (no need for ginit.vim anymore)
+set linespace=1
+" set guifont=DejaVu\ Sans\ Mono:h15
+set guifont=Fira\ Code:h14
+" set guifont=Liberation\ Mono:h15
 
 " " neovide config (Windows GUI)
 let g:neovide_fullscreen=v:false
@@ -276,7 +301,7 @@ command! Scratch execute Scratch()
 
 " " run program
 " " it runs my script 'runprog.py'
-nnoremap <F5> :w<cr>:AsyncRun python -u \%userprofile\%\\path\\runprog.py %<CR>
+nnoremap <F5> :w<cr>:AsyncRun py -u \%userprofile\%\\path\\runprog.py %<CR>
 
 " " sources local file if it exists
 " "    in that file, you set up all the configuration that is particular to
@@ -336,24 +361,18 @@ let g:UltiSnipsJumpForwardTrigger="<c-b>"
 let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " LeaderF Config
-" LeaderF cheatsheet:
-" LeaderF function to see function in buffer - mapped to <leader>F
+" I replaced this with vim-clap... except for displaying functions on the current buffer
 
-" don't show the help in normal mode
+let g:python_host_prog  = 'C:\Python27\python.exe'
+let g:python3_host_prog = 'C:\Users\Admin\AppData\Local\Programs\Python\Python39\python.exe'
 let g:Lf_PythonVersion = 3
 let g:Lf_RootMarkers = ['.git']
 let g:Lf_ExternalCommand = 'rg --files --no-ignore "%s"'
 let g:Lf_DefaultExternalTool = 'rg'
 " let g:Lf_UseVersionControlTool = 0
-let g:Lf_WindowPosition = 'bottom'
+let g:Lf_WindowPosition = 'popup'
 let g:Lf_PreviewInPopup = 1
-nnoremap <leader>at :Tags<cr>
-" nnoremap <leader>o :Files<cr>
-nnoremap <leader>o :Leaderf file<cr>
-" nnoremap <leader>r :Leaderf rg --no-ignore 
-nnoremap <leader>b :Leaderf buffer<cr>
 nnoremap <leader>F :Leaderf function<cr>
-
 
 fun! SaveSession()
   let l:proj_dir = getcwd()
@@ -387,7 +406,7 @@ set errorformat+=%f(%l:%c)\ %m
 
 " odin - go to definition
 fun! OdinGoToDef(identif)
-  let l:the_command = 'Rg --no-ignore ^^\s*' . a:identif . '\s*:: . C:\Users\Admin\dev\Odin'
+  let l:the_command = 'Rg --no-ignore -g "*.odin" ^^\s*' . a:identif . '\s*:: . C:\Users\Admin\dev\Odin'
   let l:the_command .= ' C:\Users\Admin\dev\Odin\shared'
   " echo the_command
   execute the_command
@@ -396,7 +415,7 @@ nnoremap <leader>gd yiw:call OdinGoToDef("\\b<c-r>+\\b")<cr>
 
 " odin - search odin code
 fun! OdinSearch(thing)
-  let l:the_command = 'Rg ' . a:thing . ' C:\Users\Admin\dev\Odin'
+  let l:the_command = 'Rg -g "*.odin" ' . a:thing . ' C:\Users\Admin\dev\Odin'
   " echo the_command
   execute the_command
 endfun
@@ -444,7 +463,7 @@ au VimResized * wincmd =
 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = {"c", "cpp", "json", "go", "python"},
+  ensure_installed = {"c", "cpp", "json", "javascript", "go", "python"},
   highlight = {
     enable = true,
   },
@@ -478,3 +497,53 @@ au FileType cpp,c,python,vim nnoremap <buffer> <leader>gf :Leaderf function<cr>
 
 " to get rid of the ^M's that sometimes show up for some reason
 nnoremap <leader>Rm :e ++ff=dos<cr>
+
+
+" vim-peekaboo config
+function! CreateCenteredFloatingWindow()
+    let width = float2nr(&columns * 0.6)
+    let height = float2nr(&lines * 0.6)
+    let top = ((&lines - height) / 2) - 1
+    let left = (&columns - width) / 2
+    let opts = {'relative': 'editor', 'row': top, 'col': left, 'width': width, 'height': height, 'style': 'minimal'}
+
+    let top = "╭" . repeat("─", width - 2) . "╮"
+    let mid = "│" . repeat(" ", width - 2) . "│"
+    let bot = "╰" . repeat("─", width - 2) . "╯"
+    let lines = [top] + repeat([mid], height - 2) + [bot]
+    let s:buf = nvim_create_buf(v:false, v:true)
+    call nvim_buf_set_lines(s:buf, 0, -1, v:true, lines)
+    call nvim_open_win(s:buf, v:true, opts)
+    set winhl=Normal:Floating
+    let opts.row += 1
+    let opts.height -= 2
+    let opts.col += 2
+    let opts.width -= 4
+    call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, opts)
+    au BufWipeout <buffer> exe 'bw '.s:buf
+endfunction
+
+let g:peekaboo_window="call CreateCenteredFloatingWindow()"
+
+" dirvish config
+nnoremap <leader>d :Dirvish<cr>
+
+" quit vim
+nnoremap <c-q> :qa<cr>
+
+" vim-clap config
+let g:clap_insert_mode_only = v:true
+let g:clap_provider_grep_opts = '-H --no-heading --vimgrep --no-ignore --smart-case'
+let g:clap_layout = { 'relative': 'editor' }
+
+let g:clap_provider_files_no_ignore = {
+   \ 'id': 'files_no_ignore',
+   \ 'source': 'rg --files --no-ignore',
+   \ 'sink': 'e',
+   \ }
+
+" vim-clap mappings
+nnoremap <leader>O :Clap filer<cr>
+nnoremap <leader>o :Clap files_no_ignore<cr>
+nnoremap <leader>b :Clap buffers<cr>
+nnoremap <leader>R :Clap grep<cr>
