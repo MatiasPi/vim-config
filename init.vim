@@ -1,53 +1,44 @@
 " " some of this only runs on Neovim 0.5 so make sure you have that
+" Programs Required:
+" rg
+
 
 " " cool ideas to try:
 
 " alt+w/b to move between words in variables, like you have 'unicodeLetter' and pressing alt+w would take you to the L instead of to the next word. use that plugin u used for that
 
-
-
 " " todos:
 
-" - look into autocompletion:
-" -   https://github.com/neoclide/coc.nvim
-" -   https://github.com/Shougo/deoplete.nvim
-" -   https://github.com/ycm-core/YouCompleteMe
-" - check out these videos for setting autocompletion stuff up:
-" - https://www.youtube.com/watch?v=Iid1Ms14Om4
-" - https://www.youtube.com/watch?v=ICU9OEsNiRA
-"
 " plugins to try out:
 
 " terminal on the floating popup
 " https://github.com/voldikss/vim-floaterm
 
-" delete instead of cut
-" https://github.com/svermeulen/vim-cutlass
-
-" vim-clap.. Leaderf replacement
-" https://github.com/liuchengxu/vim-clap
+let g:polyglot_disabled = ['odin', 'python', 'c', 'cpp', 'lua', 'json']
 
 call plug#begin('~/.local/share/nvim/plugged')
 " color schemes
 Plug 'dracula/vim', {'as':'dracula'}
 Plug 'sainnhe/gruvbox-material'
+Plug 'gosukiwi/vim-atom-dark'
 " rest
 Plug 'sheerun/vim-polyglot'
 Plug 'tpope/vim-commentary'
-Plug 'skywind3000/asyncrun.vim'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'Raimondi/delimitMate'
 Plug 'Yggdroot/LeaderF'
 Plug 'jremmen/vim-ripgrep'
 Plug 'stefandtw/quickfix-reflector.vim'
-Plug '~/dev/odin.vim'
-Plug 'nvim-treesitter/nvim-treesitter'
-Plug 'nvim-treesitter/playground'
+Plug '~/dev/third_party/odin.vim'
+"Plug 'nvim-treesitter/nvim-treesitter' "treesitter is just so buggy now
+"Plug 'nvim-treesitter/playground'
 Plug 'junegunn/vim-peekaboo'
 Plug 'justinmk/vim-dirvish'
 Plug 'liuchengxu/vim-clap', { 'do': ':Clap install-binary' }
-
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'rafcamlet/nvim-luapad', { 'branch': '0.2' }
+Plug 'tpope/vim-dispatch'
 call plug#end()
 
 " " gui config (no need for ginit.vim anymore)
@@ -65,16 +56,17 @@ let g:neovide_cursor_trail_length=2
 autocmd FileType netrw setl bufhidden=wipe
 let g:netrw_fastbrowse = 0
 
-let g:polyglot_disabled = ['odin', 'python', 'c', 'cpp', 'lua', 'json']
 
 " " Color theme config
 set termguicolors
 set background=dark
 let g:gruvbox_material_disable_italic_comment = 1
-let g:gruvbox_material_background = 'medium'
+let g:gruvbox_material_enable_italic = 0
+let g:gruvbox_material_background = 'hard'
 let g:dracula_italic = 0
-colorscheme gruvbox-material
-" colorscheme dracula
+" colorscheme gruvbox-material
+" colorscheme atom-dark
+colorscheme dracula
 
 let mapleader = "-"
 
@@ -107,8 +99,11 @@ set expandtab
 set hidden
 set mouse=a
 
+" TODO(lucypero): can you combine the following two lines?
 " " indent with tabs on gdscript files
-autocmd Filetype gdscript3 setlocal autoindent tabstop=2 shiftwidth=2 softtabstop=2 noexpandtab
+autocmd Filetype gdscript3 setlocal autoindent tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
+" " indent python files wth tabs
+au FileType python setlocal autoindent tabstop=4 shiftwidth=4 softtabstop=4 noexpandtab
 
 " " save all shortcut
 nnoremap <leader>s :wa <cr>
@@ -116,6 +111,10 @@ nnoremap <leader>s :wa <cr>
 " " so that i don't need to hold shift all the time
 nnoremap ; :
 vnoremap ; :
+
+" " see tabs and trailing characters
+set list
+set listchars=tab:>\ ,trail:·
 
 nnoremap <leader>w <C-w><C-w>
 
@@ -161,35 +160,7 @@ map <C-j> <C-w>j
 map <C-k> <C-w>k
 map <C-l> <C-w>l
 
-" " generate tags
-nnoremap <leader>T :AsyncRun ctags -R .<cr><cr>
 
-" " F10 to toggle quickfix window
-nnoremap <F10> :call asyncrun#quickfix_toggle(15)<cr>
-
-function! s:run_file()
-  execute "w"
-  let l:ext = expand('%:e')
-  if ext ==# "py"
-    execute "AsyncRun -raw python -u %"
-  elseif  ext ==# "c" || ext ==# "cpp"
-    execute "AsyncRun runc %"
-  elseif  ext ==# "odin"
-    execute "AsyncRun odin run %"
-  endif
-endfunction
-
-if has("win32")
-noremap <silent> <F8> :wa<cr>:AsyncRun build.bat<cr>
-endif
-if has("unix")
-noremap <silent> <F8> :wa<cr>:AsyncRun \.\/build.sh<cr>
-endif
-
-noremap <silent> <F9> :wa<cr>:call <sid>run_file()<cr>
-
-noremap <silent> <C-F9> :wa<cr>:AsyncStop<cr>
-noremap <silent> <C-F8> :wa<cr>:AsyncStop<cr>
 
 " " set scrolloff so that the cursor does not reach the edges of the screen (which is never good)
 set scrolloff=10
@@ -204,48 +175,6 @@ nnoremap <leader>h :e %:p:s,.h$,.X123X,:s,.cpp$,.h,:s,.X123X$,.cpp,<CR>
 set shortmess+=A
 
 " " Plugin Configuration ---
-
-" " AsyncRun configuration
-let g:asyncrun_open = 15  
-let g:asyncrun_bell = 1
-
-" " fzf config
-function! s:update_fzf_colors()
-  let rules =
-  \ { 'fg':      [['Normal',       'fg']],
-    \ 'bg':      [['Normal',       'bg']],
-    \ 'hl':      [['Comment',      'fg']],
-    \ 'fg+':     [['CursorColumn', 'fg'], ['Normal', 'fg']],
-    \ 'bg+':     [['CursorColumn', 'bg']],
-    \ 'hl+':     [['Statement',    'fg']],
-    \ 'info':    [['PreProc',      'fg']],
-    \ 'prompt':  [['Conditional',  'fg']],
-    \ 'pointer': [['Exception',    'fg']],
-    \ 'marker':  [['Keyword',      'fg']],
-    \ 'spinner': [['Label',        'fg']],
-    \ 'header':  [['Comment',      'fg']] }
-  let cols = []
-  for [name, pairs] in items(rules)
-    for pair in pairs
-      let code = synIDattr(synIDtrans(hlID(pair[0])), pair[1])
-      if !empty(name) && code > 0
-        call add(cols, name.':'.code)
-        break
-      endif
-    endfor
-  endfor
-  let s:orig_fzf_default_opts = get(s:, 'orig_fzf_default_opts', $FZF_DEFAULT_OPTS)
-  let $FZF_DEFAULT_OPTS = s:orig_fzf_default_opts .
-        \ empty(cols) ? '' : (' --color='.join(cols, ','))
-endfunction
-
-augroup _fzf
-  autocmd!
-  autocmd ColorScheme * call <sid>update_fzf_colors()
-augroup END
-
-" nnoremap <leader>at :Tags<cr>
-" nnoremap <leader>o :Files<cr>
 
 " " vim-ripgrep config
 nnoremap <leader>r :Rg --no-ignore 
@@ -281,13 +210,7 @@ nnoremap <leader>] :cn<cr>
 " " go to current error
 nnoremap <leader>} :cc<cr>
 
-" " run current c/c++ file
-nnoremap <leader>5 :w<cr>:AsyncRun runc %<cr>
-
-" " C-c C-v copy and paste
-vnoremap <C-c> "+y
-" noremap <C-v> "+P
-
+" " go to vim config
 nnoremap <leader><F3> :e $MYVIMRC<CR>
 
 function! Scratch()
@@ -298,10 +221,6 @@ function! Scratch()
 endfunction
 
 command! Scratch execute Scratch()
-
-" " run program
-" " it runs my script 'runprog.py'
-nnoremap <F5> :w<cr>:AsyncRun py -u \%userprofile\%\\path\\runprog.py %<CR>
 
 " " sources local file if it exists
 " "    in that file, you set up all the configuration that is particular to
@@ -329,36 +248,6 @@ fun! ShowFuncName()
   echohl None
 endfun
 map <leader>f :call ShowFuncName() <CR>
-
-" " LanguageClient configuration
-" " NOTE: requires cquery to be installed
-let g:LanguageClient_serverCommands = {
-    \ 'cpp': ['cquery', '--log-file=/tmp/cq.log'],
-    \ 'c': ['cquery', '--log-file=/tmp/cq.log'],
-    \ 'py': ['pyls', '--log-file=/tmp/cq.log']
-    \ }
-let g:LanguageClient_loadSettings = 1 " Use an absolute configuration path if you want system-wide settings
-" let g:LanguageClient_settingsPath = '/home/YOUR_USERNAME/.config/nvim/settings.json'
-let g:LanguageClient_diagnosticsEnable = 0
-let g:LanguageClient_hoverPreview = "Never"
-if has('win32')
-  let g:LanguageClient_settingsPath = '\%userprofile\%\\AppData\\Local\\nvim\\settings.json'
-endif
-if has('unix')
-  let g:LanguageClient_settingsPath = '~/.config/nvim/settings.json'
-endif
-set completefunc=LanguageClient#complete
-set formatexpr=LanguageClient_textDocument_rangeFormatting()
-
-" nnoremap <silent> gh :call LanguageClient#textDocument_hover()<CR>
-" nnoremap <silent> gd :call LanguageClient#textDocument_definition()<CR>
-" nnoremap <silent> gr :call LanguageClient#textDocument_references()<CR>
-" nnoremap <silent> gs :call LanguageClient#textDocument_documentSymbol()<CR>
-" nnoremap <silent> <F2> :call LanguageClient#textDocument_rename()<CR>
-
-" UltiSnips Config
-let g:UltiSnipsJumpForwardTrigger="<c-b>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " LeaderF Config
 " I replaced this with vim-clap... except for displaying functions on the current buffer
@@ -401,13 +290,15 @@ let g:loaded_netrwPlugin = 1
 
 " ----------- Odin stuff -----------
 
+let s:odin_location = 'C:\Users\Admin\dev\third_party\Odin'
+
 " odin errorformat
 set errorformat+=%f(%l:%c)\ %m
 
 " odin - go to definition
 fun! OdinGoToDef(identif)
-  let l:the_command = 'Rg --no-ignore -g "*.odin" ^^\s*' . a:identif . '\s*:: . C:\Users\Admin\dev\Odin'
-  let l:the_command .= ' C:\Users\Admin\dev\Odin\shared'
+  let l:the_command = 'Rg --no-ignore -g "*.odin" ^^\s*' . a:identif . '\s*:: . ' . s:odin_location
+  let l:the_command .= ' ' . s:odin_location . '\shared'
   " echo the_command
   execute the_command
 endfun
@@ -415,8 +306,9 @@ nnoremap <leader>gd yiw:call OdinGoToDef("\\b<c-r>+\\b")<cr>
 
 " odin - search odin code
 fun! OdinSearch(thing)
-  let l:the_command = 'Rg -g "*.odin" ' . a:thing . ' C:\Users\Admin\dev\Odin'
-  " echo the_command
+  echo 'hadwhdaw'
+  let l:the_command = 'Rg -g "*.odin" ' . a:thing . ' ' . s:odin_location
+  echo the_command
   execute the_command
 endfun
 nnoremap <leader>go :call OdinSearch("")<left><left>
@@ -461,23 +353,24 @@ nnoremap <leader>ca : call ListCodeSeparators()<cr>
 
 au VimResized * wincmd =
 
-lua <<EOF
-require'nvim-treesitter.configs'.setup {
-  ensure_installed = {"c", "cpp", "json", "javascript", "go", "python"},
-  highlight = {
-    enable = true,
-  },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn",
-      node_incremental = "grn",
-      scope_incremental = "rc",
-      node_decremental = "grm",
-    },
-  },
-}
-EOF
+" I'm not running treesitter at the moment. It spits out errors all the time.
+" lua <<EOF
+" require'nvim-treesitter.configs'.setup {
+"   ensure_installed = {"c", "cpp", "json", "javascript", "go", "python"},
+"   highlight = {
+"     enable = true,
+"   },
+"   incremental_selection = {
+"     enable = true,
+"     keymaps = {
+"       init_selection = "gnn",
+"       node_incremental = "grn",
+"       scope_incremental = "rc",
+"       node_decremental = "grm",
+"     },
+"   },
+" }
+" EOF
 
 
 " ----------- Filetype specific bindings -----------
@@ -528,8 +421,14 @@ let g:peekaboo_window="call CreateCenteredFloatingWindow()"
 " dirvish config
 nnoremap <leader>d :Dirvish<cr>
 
+" close buffer quickly
+nnoremap <c-q> :q<cr>
+
 " quit vim
-nnoremap <c-q> :qa<cr>
+nnoremap <leader><c-q> :qa<cr>
+
+
+" ----------- Plugin Config: vim-clap  -----------
 
 " vim-clap config
 let g:clap_insert_mode_only = v:true
@@ -547,3 +446,126 @@ nnoremap <leader>O :Clap filer<cr>
 nnoremap <leader>o :Clap files_no_ignore<cr>
 nnoremap <leader>b :Clap buffers<cr>
 nnoremap <leader>R :Clap grep<cr>
+
+
+" ----------- Plugin Config: CoC -----------
+
+" Some servers have issues with backup files, see #649.
+set nobackup
+set nowritebackup
+
+" Sign column takes too much space, I don't think I need it.
+set signcolumn=no
+
+" Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
+" delays and poor user experience.
+set updatetime=300
+
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+" Use `[g` and `]g` to navigate diagnostics
+" Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+
+" GoTo code navigation.
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" Use K to show documentation in preview window.
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  elseif (coc#rpc#ready())
+    call CocActionAsync('doHover')
+  else
+    execute '!' . &keywordprg . " " . expand('<cword>')
+  endif
+endfunction
+
+" Highlight the symbol and its references when holding the cursor.
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Display CoC Diagnostics
+" all Coc mapping will start with <leader>c
+
+nnoremap <leader>cd :CocDiagnostics<cr>
+
+
+" swapping # and * mappings because i want to use * much more often and it is harder to reach
+nnoremap # *
+nnoremap * #
+
+
+
+" searching for rule definitions in tree sitter grammar
+function! GetRuleDefinition(rule)
+    let l:the_command = '/^\s*' . a:rule . '\s*:'
+    execute the_command
+endfunction
+nnoremap <leader>gR :call GetRuleDefinition("
+nnoremap <leader>gr yiw:call GetRuleDefinition("<c-r>+")<cr>
+
+
+"Compilation config
+" for this I use vim-dispatch
+set makeprg=odin\ run\ main.odin
+
+function! CompileTest()
+  set makeprg=build.bat
+  execute 'make'
+endfunction
+
+function! s:run_file()
+  if &filetype ==# "python"
+    " set makeprg=python3\ -u\ %
+    compiler pyunit
+    set makeprg=python3\ -u\ %
+  elseif  &filetype ==# "c" || &filetype ==# "cpp"
+    set makeprg=runc\ %
+  elseif &filetype ==# "odin"
+    set makeprg=odin\ run\ %
+  else
+    echo "filetype not recognized"
+    return
+  endif
+  execute 'Make'
+endfunction
+
+function! s:compile_project()
+  if has("win32")
+    set makeprg=build.bat
+  endif
+  if has("unix")
+    set makeprg=\.\/build.sh
+  endif
+  execute 'Make'
+endfunction
+
+noremap <silent> <F8> :wa<cr>:call <sid>compile_project()<cr>
+noremap <silent> <F9> :wa<cr>:call <sid>run_file()<cr>
+
+" " F10 to open quickfix window
+function! ToggleQuickFix()
+    if empty(filter(getwininfo(), 'v:val.quickfix'))
+        Copen
+    else
+        cclose
+    endif
+endfunction
+
+nnoremap <silent> <F10> :call ToggleQuickFix()<cr>
