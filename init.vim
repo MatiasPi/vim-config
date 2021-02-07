@@ -39,6 +39,10 @@ Plug 'liuchengxu/vim-clap', { 'do': ':Clap install-binary' }
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'rafcamlet/nvim-luapad', { 'branch': '0.2' }
 Plug 'tpope/vim-dispatch'
+Plug 'skywind3000/asyncrun.vim'
+Plug 'hutterm/vim-workspace'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 call plug#end()
 
 " " gui config (no need for ginit.vim anymore)
@@ -49,12 +53,15 @@ set guifont=Fira\ Code:h14
 
 " " neovide config (Windows GUI)
 let g:neovide_fullscreen=v:false
-let g:neovide_cursor_animation_length=0.1
+let g:neovide_cursor_animation_length=0
 let g:neovide_cursor_trail_length=2
+let g:neovide_cursor_vfx_mode = "wireframe"
+let g:neovide_cursor_antialiasing=v:true
 
 " " close netrw
 autocmd FileType netrw setl bufhidden=wipe
 let g:netrw_fastbrowse = 0
+
 
 
 " " Color theme config
@@ -64,9 +71,9 @@ let g:gruvbox_material_disable_italic_comment = 1
 let g:gruvbox_material_enable_italic = 0
 let g:gruvbox_material_background = 'hard'
 let g:dracula_italic = 0
-" colorscheme gruvbox-material
+colorscheme gruvbox-material
 " colorscheme atom-dark
-colorscheme dracula
+" colorscheme dracula
 
 let mapleader = "-"
 
@@ -251,6 +258,7 @@ map <leader>f :call ShowFuncName() <CR>
 
 " LeaderF Config
 " I replaced this with vim-clap... except for displaying functions on the current buffer
+" I went back to fzf haha
 
 let g:python_host_prog  = 'C:\Python27\python.exe'
 let g:python3_host_prog = 'C:\Users\Admin\AppData\Local\Programs\Python\Python39\python.exe'
@@ -262,15 +270,6 @@ let g:Lf_DefaultExternalTool = 'rg'
 let g:Lf_WindowPosition = 'popup'
 let g:Lf_PreviewInPopup = 1
 nnoremap <leader>F :Leaderf function<cr>
-
-fun! SaveSession()
-  let l:proj_dir = getcwd()
-  let l:proj_folder = matchstr(l:proj_dir, '.*\\\zs\(.*\)\ze$')
-  let l:session_file = "~/.vim/sessions/" . l:proj_folder . ".vim"
-  execute 'mks! ' . l:session_file
-endfun
-
-nnoremap <leader>S :call SaveSession()<cr>
 
 " type todo - //TODO(lucypero): blabla
 nmap <leader>9 oTODO(lucypero):<ESC>gccA 
@@ -429,6 +428,7 @@ nnoremap <leader><c-q> :qa<cr>
 
 
 " ----------- Plugin Config: vim-clap  -----------
+" I went back to fzf haha
 
 " vim-clap config
 let g:clap_insert_mode_only = v:true
@@ -442,10 +442,10 @@ let g:clap_provider_files_no_ignore = {
    \ }
 
 " vim-clap mappings
-nnoremap <leader>O :Clap filer<cr>
-nnoremap <leader>o :Clap files_no_ignore<cr>
-nnoremap <leader>b :Clap buffers<cr>
-nnoremap <leader>R :Clap grep<cr>
+" nnoremap <leader>O :Clap filer<cr>
+" nnoremap <leader>o :Clap files_no_ignore<cr>
+" nnoremap <leader>b :Clap buffers<cr>
+" nnoremap <leader>R :Clap grep<cr>
 
 
 " ----------- Plugin Config: CoC -----------
@@ -557,7 +557,7 @@ function! s:compile_project()
 endfunction
 
 noremap <silent> <F8> :wa<cr>:call <sid>compile_project()<cr>
-noremap <silent> <F9> :wa<cr>:call <sid>run_file()<cr>
+noremap <silent> <c-F9> :wa<cr>:call <sid>run_file()<cr>
 
 " " F10 to open quickfix window
 function! ToggleQuickFix()
@@ -569,3 +569,24 @@ function! ToggleQuickFix()
 endfunction
 
 nnoremap <silent> <F10> :call ToggleQuickFix()<cr>
+
+" " vim-workspace config
+
+" useful commands:
+" :CloseHiddenBuffers
+" :ToggleWorkspace
+let g:workspace_autocreate =1
+let g:workspace_session_directory = $HOME . '/.vim/sessions/'
+let g:workspace_autosave = 0
+
+" " fzf config
+nnoremap <leader>O :Clap filer<cr>
+nnoremap <leader>o :Files<cr>
+nnoremap <leader>b :Buffers<cr>
+nnoremap <leader>R :Rg 
+let g:fzf_preview_window = []
+
+" " buffer/window navigation
+" f9 and f10 to quickly cycle through buffers
+nnoremap <f9> :bp<cr>
+nnoremap <f10> :bn<cr>
